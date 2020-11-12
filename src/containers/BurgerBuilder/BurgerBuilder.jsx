@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import Burger from "../../components/Burger/Burger";
 import BuildControls from "../../components/Burger/BuildControls/BuildControls";
+import Modal from "../../components/UI/Modal/Modal";
+import OrderSummay from "../../components/Burger/OrderSummary/OrderSummary";
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -16,10 +18,12 @@ class BurgerBuilder extends Component {
       ingredients: {
         salad: 0,
         bacon: 0,
-        cheese: 2,
+        cheese: 0,
         meat: 0,
       },
-      totalPrice: 4,
+      totalPrice: 0,
+      purchaseable: false,
+      purchasing: false,
     };
   }
 
@@ -37,6 +41,16 @@ class BurgerBuilder extends Component {
       totalPrice: newPrice,
       ingredients: updatedIngredients,
     });
+    this.updatePurchaseState(updatedIngredients);
+  };
+
+  updatePurchaseState = (ingredients) => {
+    const sum = Object.keys(ingredients)
+      .map((igKey) => {
+        return ingredients[igKey];
+      })
+      .reduce((sum, el) => sum + el, 0);
+    this.setState({ purchaseable: sum > 0 });
   };
 
   removeIngredient = (type) => {
@@ -54,17 +68,30 @@ class BurgerBuilder extends Component {
         totalPrice: newPrice,
         ingredients: updatedIngredients,
       });
+      this.updatePurchaseState(updatedIngredients);
     }
+  };
+
+  purchaseHandler = () => {
+    this.setState({
+      purchasing: !this.state.purchasing,
+    });
   };
 
   render() {
     return (
       <React.Fragment>
+        <Modal show={this.state.purchasing} modalClosed={this.purchaseHandler}>
+          <OrderSummay ingredients={this.state.ingredients} />
+        </Modal>
+
         <Burger ingredients={this.state.ingredients} />
         <BuildControls
           price={this.state.totalPrice}
           ingredientAdded={this.addIngredient}
           ingredientRemoved={this.removeIngredient}
+          purchaseable={this.state.purchaseable}
+          ordered={this.purchaseHandler}
         />
       </React.Fragment>
     );
